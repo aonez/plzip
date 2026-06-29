@@ -1,6 +1,6 @@
 #! /bin/sh
 # check script for Plzip - Massively parallel implementation of lzip
-# Copyright (C) 2009-2025 Antonio Diaz Diaz.
+# Copyright (C) 2009-2026 Antonio Diaz Diaz.
 #
 # This script is free software: you have unlimited permission
 # to copy, distribute, and modify it.
@@ -47,14 +47,14 @@ lzlib_1_10() { [ ${lwarn10} = 0 ] &&
 
 printf "testing plzip-%s..." "$2"
 
-"${LZIP}" -fkqm4 in
+"${LZIP}" -fkq -m4 in
 [ $? = 1 ] || test_failed $LINENO
 [ ! -e in.lz ] || test_failed $LINENO
-"${LZIP}" -fkqm274 in
+"${LZIP}" -fkq -m274 in
 [ $? = 1 ] || test_failed $LINENO
 [ ! -e in.lz ] || test_failed $LINENO
-for i in bad_size -1 0 4095 513MiB 1G 1T 1P 1E 1Z 1Y 10KB ; do
-	"${LZIP}" -fkqs $i in
+for i in bad_size -1 0 4095 0xFFF 07777 513MiB 1G 1T 1P 1E 1Z 1Y 10KB ; do
+	"${LZIP}" -fkq -s $i in
 	[ $? = 1 ] || test_failed $LINENO $i
 	[ ! -e in.lz ] || test_failed $LINENO $i
 done
@@ -309,7 +309,7 @@ rm -f copy out.lz || framework_failure
 
 cat in in in in > in4 || framework_failure
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 ; do
-	"${LZIP}" -s4Ki -B8Ki -n$i < in4 > out4.lz || test_failed $LINENO $i
+	"${LZIP}" -s010_000 -B8Ki -n$i < in4 > out4.lz || test_failed $LINENO $i
 	printf "g" >> out4.lz || framework_failure
 	"${LZIP}" -d -n$i < out4.lz > out4 || test_failed $LINENO $i
 	cmp in4 out4 || test_failed $LINENO $i
@@ -318,7 +318,7 @@ for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 ; do
 	"${LZIP}" -d --out-slots=$i < out4.lz > out4 || test_failed $LINENO $i
 	cmp in4 out4 || test_failed $LINENO $i
 
-	"${LZIP}" -c -s4Ki -B8Ki -n$i in4 > out4.lz || test_failed $LINENO $i
+	"${LZIP}" -c -s0x1000 -B8Ki -n$i in4 > out4.lz || test_failed $LINENO $i
 	printf "g" >> out4.lz || framework_failure
 	"${LZIP}" -cd -n$i out4.lz > out4 || test_failed $LINENO $i
 	cmp in4 out4 || test_failed $LINENO $i
@@ -330,7 +330,7 @@ for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 ; do
 done
 rm -f in4 out4 || framework_failure
 
-cat in in in in in in in in | "${LZIP}" -1s4Ki | "${LZIP}" -t ||
+cat in in in in in in in in | "${LZIP}" -1 -s4_096 | "${LZIP}" -t ||
 	test_failed $LINENO
 
 "${LZIP}" fox -o a/b/c/fox.lz || test_failed $LINENO

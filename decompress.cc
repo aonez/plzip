@@ -1,6 +1,6 @@
 /* Plzip - Massively parallel implementation of lzip
    Copyright (C) 2009 Laszlo Ersek.
-   Copyright (C) 2009-2025 Antonio Diaz Diaz.
+   Copyright (C) 2009-2026 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -137,15 +137,13 @@ void show_results( const unsigned long long in_size,
   if( verbosity >= 2 )
     {
     if( verbosity >= 4 ) show_header( dictionary_size );
-    if( out_size == 0 || in_size == 0 )
-      std::fputs( "no data compressed. ", stderr );
-    else
-      std::fprintf( stderr, "%6.3f:1, %5.2f%% ratio, %5.2f%% saved. ",
+    if( verbosity >= 3 && out_size > 0 && in_size > 0 )
+      std::fprintf( stderr, "%6.3f:1, %5.2f%% ratio, %5.2f%% saved, ",
                     (double)out_size / in_size,
                     ( 100.0 * in_size ) / out_size,
                     100.0 - ( ( 100.0 * in_size ) / out_size ) );
-    if( verbosity >= 3 )
-      std::fprintf( stderr, "%9llu out, %8llu in. ", out_size, in_size );
+    std::fprintf( stderr, "%11s out, %10s in. ",
+                  format_num3( out_size ), format_num3( in_size ));
     }
   if( verbosity >= 1 ) std::fputs( testing ? "ok\n" : "done\n", stderr );
   }
@@ -213,7 +211,7 @@ extern "C" void * dworker( void * arg )
           {
           if( preadblock( infd, ibuffer, size, member_pos ) != size )
             { if( shared_retval.set_value( 1 ) )
-                { pp(); show_error( "Read error", errno ); } goto done; }
+                { pp(); show_error( rd_err_msg, errno ); } goto done; }
           member_pos += size;
           member_rest -= size;
           if( LZ_decompress_write( decoder, ibuffer, size ) != size )
@@ -309,7 +307,8 @@ int decompress( const unsigned long long cfile_size, int num_workers,
       const int tmp = dec_stdout( num_workers, infd, outfd, pp, debug_level,
                                   out_slots, lzip_index );
       if( tmp ) return tmp;
-      if( multi_empty ) { show_file_error( pp.name(), empty_msg ); return 2; }
+      if( multi_empty )
+        { show_file_error( pp.name(), empty_member_msg ); return 2; }
       return 0;
       }
     }
@@ -361,6 +360,7 @@ int decompress( const unsigned long long cfile_size, int num_workers,
     std::fprintf( stderr,
       "workers started                           %8u\n", num_workers );
 
-  if( multi_empty ) { show_file_error( pp.name(), empty_msg ); return 2; }
+  if( multi_empty )
+    { show_file_error( pp.name(), empty_member_msg ); return 2; }
   return 0;
   }

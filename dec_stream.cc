@@ -1,6 +1,6 @@
 /* Plzip - Massively parallel implementation of lzip
    Copyright (C) 2009 Laszlo Ersek.
-   Copyright (C) 2009-2025 Antonio Diaz Diaz.
+   Copyright (C) 2009-2026 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -441,7 +441,7 @@ fail:
   bool at_stream_end = ( size < buffer_size );
   if( size != buffer_size && errno )
     { if( shared_retval.set_value( 1 ) )
-      { pp(); show_error( "Read error", errno ); } goto fail; }
+      { pp(); show_error( rd_err_msg, errno ); } goto fail; }
   if( size + hsize < min_member_size )
     { if( shared_retval.set_value( 2 ) ) show_file_error( pp.name(),
         ( size <= 0 ) ? "File ends unexpectedly at member header." :
@@ -535,7 +535,7 @@ fail:
     at_stream_end = ( size < buffer_size );
     if( size != buffer_size && errno )
       { if( shared_retval.set_value( 1 ) )
-        { pp(); show_error( "Read error", errno ); } break; }
+        { pp(); show_error( rd_err_msg, errno ); } break; }
     }
   delete[] base_buffer;
   courier.finish( worker_id );		// no more packets to send

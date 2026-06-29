@@ -1,6 +1,6 @@
 /* Plzip - Massively parallel implementation of lzip
    Copyright (C) 2009 Laszlo Ersek.
-   Copyright (C) 2009-2025 Antonio Diaz Diaz.
+   Copyright (C) 2009-2026 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -46,7 +46,6 @@ struct Packet			// data block
   uint8_t * data;		// data may be null if size == 0
   int size;			// number of bytes in data (if any)
   bool eom;			// end of member
-  Packet() : data( 0 ), size( 0 ), eom( false ) {}
   Packet( uint8_t * const d, const int s, const bool e )
     : data( d ), size( s ), eom ( e ) {}
   void delete_data() { if( data ) { delete[] data; data = 0; } }
@@ -208,7 +207,7 @@ extern "C" void * dworker_o( void * arg )
           {
           if( preadblock( infd, ibuffer, size, member_pos ) != size )
             { if( shared_retval.set_value( 1 ) )
-                { pp(); show_error( "Read error", errno ); } goto done; }
+                { pp(); show_error( rd_err_msg, errno ); } goto done; }
           member_pos += size;
           member_rest -= size;
           if( LZ_decompress_write( decoder, ibuffer, size ) != size )

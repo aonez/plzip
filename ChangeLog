@@ -1,3 +1,15 @@
+2026-03-07  Antonio Diaz Diaz  <antonio@gnu.org>
+
+	* Version 1.13 released.
+	* decompress.cc (show_results): With -vv print sizes, not ratios.
+	* list.cc (list_files): Print size of tdata below sizes of members.
+	  With -vv print a blank line between files.
+	* lzip_index.cc (skip_box): New function.
+	* main.cc (getnum): Accept underscore separators ('_').
+	  (show_help): New argument 'bool full' to print usage or full help.
+	  (show_help): Print "*Exit status*" for section in man page.
+	* Print large numbers with underscore separators ('_').
+
 2025-01-09  Antonio Diaz Diaz  <antonio@gnu.org>
 
 	* Version 1.12 released.
@@ -5,6 +17,7 @@
 	  Return 2 if any empty member is found in a multimember file.
 	* dec_stdout.cc, dec_stream.cc:
 	  Change 'deliver_packet' to 'deliver_packets'.
+	* list.cc (list_files): Detect write error on stdout.
 	* plzip.texi: New chapter 'Syntax of command-line arguments'.
 	* check.sh: Use 'cp' instead of 'cat'.
 
@@ -237,7 +250,7 @@
             until something better appears on the net.
 
 
-Copyright (C) 2009-2025 Antonio Diaz Diaz.
+Copyright (C) 2009-2026 Antonio Diaz Diaz.
 
 This file is a collection of facts, and thus it is not copyrightable, but just
 in case, you have unlimited permission to copy, distribute, and modify it.

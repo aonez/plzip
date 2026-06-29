@@ -6,8 +6,8 @@
 @finalout
 @c %**end of header
 
-@set UPDATED 9 January 2025
-@set VERSION 1.12
+@set UPDATED 7 March 2026
+@set VERSION 1.13
 
 @dircategory Compression
 @direntry
@@ -51,7 +51,7 @@ This manual is for Plzip (version @value{VERSION}, @value{UPDATED}).
 @end menu
 
 @sp 1
-Copyright @copyright{} 2009-2025 Antonio Diaz Diaz.
+Copyright @copyright{} 2009-2026 Antonio Diaz Diaz.
 
 This manual is free documentation: you have unlimited permission to copy,
 distribute, and modify it.
@@ -63,7 +63,7 @@ distribute, and modify it.
 @cindex introduction
 
 @uref{http://www.nongnu.org/lzip/plzip.html,,Plzip} is a massively parallel
-(multi-threaded) implementation of lzip. Plzip uses the compression library
+(multithreaded) implementation of lzip. Plzip uses the compression library
 @uref{http://www.nongnu.org/lzip/lzlib.html,,lzlib}.
 
 @uref{http://www.nongnu.org/lzip/lzip.html,,Lzip}
@@ -101,7 +101,7 @@ taking into account both data integrity and decoder availability:
 @item
 The program
 @uref{http://www.nongnu.org/lzip/manual/lziprecover_manual.html#Data-safety,,lziprecover}
-can repair bit flip errors (one of the most common forms of data corruption)
+can repair bit-flip errors (one of the most common forms of data corruption)
 in lzip files, and provides data recovery capabilities, including
 error-checked merging of damaged copies of a file.
 @ifnothtml
@@ -173,10 +173,10 @@ The output of plzip looks like this:
 
 @example
 plzip -v foo
-  foo:  6.676:1, 14.98% ratio, 85.02% saved, 450560 in, 67493 out.
+  foo:  6.676:1, 14.98% ratio, 85.02% saved, 450_560 in, 67_493 out.
 
 plzip -tvvv foo.lz
-  foo.lz:  6.676:1, 14.98% ratio, 85.02% saved.  450560 out,  67493 in. ok
+  foo.lz:  6.676:1, 14.98% ratio, 85.02% saved, 450_560 out, 67_493 in. ok
 @end example
 
 The meaning of each field is as follows:
@@ -233,14 +233,19 @@ standard input to standard output. A hyphen @samp{-} used as a @var{file}
 argument means standard input. It can be mixed with other @var{files} and is
 read just once, the first time it appears in the command line. Remember to
 prepend @file{./} to any file name beginning with a hyphen, or use @samp{--}.
+It is the responsibility of the caller to check that the file names in the
+command line are valid. (For example, that they do not contain unprintable
+characters).
 
 @noindent
 plzip supports the following options: @xref{Argument syntax}.
 
 @table @code
 @item -h
-@itemx --help
 Print an informative help message describing the options and exit.
+
+@item --help
+Print the full help and exit.
 
 @item -V
 @itemx --version
@@ -252,7 +257,7 @@ This version number should be included in all bug reports.
 @itemx --trailing-error
 Exit with error status 2 if any remaining input is detected after
 decompressing the last member. Such remaining input is usually trailing
-garbage that can be safely ignored. @xref{concat-example}.
+garbage that can be safely ignored. @xref{concat example}.
 
 @anchor{--data-size}
 @item -B @var{bytes}
@@ -301,12 +306,13 @@ Keep (don't delete) input files during compression or decompression.
 @item -l
 @itemx --list
 Print the uncompressed size, compressed size, and percentage saved of the
-files specified. Trailing data are ignored. The values produced are correct
-even for multimember files. If more than one file is given, a final line
-containing the cumulative sizes is printed. With @option{-v}, the dictionary
-size, the number of members in the file, and the amount of trailing data (if
-any) are also printed. With @option{-vv}, the positions and sizes of each
-member in multimember files are also printed. A multimember file with one or
+files specified. Trailing data are not counted. The values produced are
+correct even for multimember files. If more than one file is given, a final
+line containing the cumulative sizes is printed. With @option{-v}, the
+dictionary size, the number of members in the file, and @samp{+t} to
+indicate the presence of trailing data are also printed. With @option{-vv},
+the positions and sizes of each member in multimember files, and the amount
+of trailing data (if any) are also printed. A multimember file with one or
 more empty members is accepted if redirected to standard input.
 
 If any file is damaged, does not exist, can't be opened, or is not regular,
@@ -320,7 +326,8 @@ additionally checks that none of the files specified contain trailing data.
 When compressing, set the match length limit in bytes. After a match this
 long is found, the search is finished. Valid values range from 5 to 273.
 Larger values usually give better compression ratios but longer compression
-times.
+times. A match is a Lempel-Ziv back-reference coded as a distance-length
+pair.
 
 @item -n @var{n}
 @itemx --threads=@var{n}
@@ -368,7 +375,7 @@ each file the largest dictionary size that does not exceed neither the file
 size nor this limit. Valid values range from @w{4 KiB} to @w{512 MiB}.
 Values 12 to 29 are interpreted as powers of two, meaning 2^12 to 2^29
 bytes. Dictionary sizes are quantized so that they can be coded in just one
-byte (@pxref{coded-dict-size}). If the size specified does not match one of
+byte (@pxref{coded dict size}). If the size specified does not match one of
 the valid sizes, it is rounded upwards by adding up to @w{(@var{bytes} / 8)}
 to it.
 
@@ -390,13 +397,12 @@ redirected to standard input.
 @item -v
 @itemx --verbose
 Verbose mode.@*
-When compressing, show the compression ratio and size for each file
-processed.@*
-When decompressing or testing, further -v's (up to 4) increase the
-verbosity level, showing status, compression ratio, dictionary size,
-decompressed size, and compressed size.@*
-Two or more @option{-v} options show the progress of (de)compression,
-except for single-member files.
+When compressing, show the compression ratio and size for each file processed.@*
+When decompressing or testing, further -v's (up to 4) increase the verbosity
+level, showing status, compression ratio, dictionary size, decompressed
+size, and compressed size.@*
+Two or more @option{-v} options show the progress of (de)compression, except
+for single-member files.
 
 @item -0 .. -9
 Compression level. Set the compression parameters (dictionary size and
@@ -468,7 +474,9 @@ and the value of LZ_API_VERSION (if defined).
 
 Numbers given as arguments to options may be expressed in decimal,
 hexadecimal, or octal (using the same syntax as integer constants in C++),
-and may be followed by a multiplier and an optional @samp{B} for "byte".
+may contain underscore separators between groups of 3 or more digits (2 or
+more digits for hexadecimal), and may be followed by a multiplier and an
+optional @samp{B} for "byte". (1_234_567kB, 4KiB, 0x1234_5678, 07_777_777).
 
 Table of SI and binary prefixes (unit multipliers):
 
@@ -592,7 +600,7 @@ A four byte string, identifying the lzip format, with the value "LZIP"
 @item VN (version number, 1 byte)
 Just in case something needs to be modified in the future. 1 for now.
 
-@anchor{coded-dict-size}
+@anchor{coded dict size}
 @item DS (coded dictionary size, 1 byte)
 The dictionary size is calculated by taking a power of 2 (the base size)
 and subtracting from it a fraction between 0/16 and 7/16 of the base size.@*
@@ -624,8 +632,9 @@ Size of the original uncompressed data.
 Total size of the member, including header and trailer. This field acts
 as a distributed index, improves the checking of stream integrity, and
 facilitates the safe recovery of undamaged members from multimember files.
-Lzip limits the member size to @w{2 PiB} to prevent the data size field from
-overflowing.
+The index is built by traversing the members backwards from the end of the
+file. Lzip limits the member size to @w{2 PiB} to prevent the data size
+field from overflowing.
 @end table
 
 
@@ -787,13 +796,15 @@ example when writing to a tape. It is safe to append any amount of
 padding zero bytes to a lzip file.
 
 @item
-Useful data added by the user; an 'End Of File' string (to check that the
-file has not been truncated), a cryptographically secure hash, a description
-of file contents, etc. It is safe to append any amount of text to a lzip
-file as long as none of the first four bytes of the text matches the
-corresponding byte in the string "LZIP", and the text does not contain any
-zero bytes (null characters). Nonzero bytes and zero bytes can't be safely
-mixed in trailing data.
+Useful data added by the user: a recovery record (@pxref{Fec files,,,lziprecover}),
+an 'End Of File' string (to check that the file has not been truncated), a
+cryptographically secure hash, a description of file contents, etc. It is
+safe to append any amount of text to a lzip file as long as none of the
+first four bytes of the text matches the corresponding byte in the string
+"LZIP", and the text does not contain any zero bytes (null characters).
+Nonzero bytes and zero bytes can't be safely mixed in trailing data unless
+the trailing data are appended using the option @option{--append} of
+lziprecover.
 
 @item
 Garbage added by some not totally successful copy operation.
@@ -880,7 +891,7 @@ show status.
 plzip -tv file.lz
 @end example
 
-@anchor{concat-example}
+@anchor{concat example}
 @noindent
 Example 6: The right way of concatenating the decompressed output of two or
 more compressed files. @xref{Trailing data}.
@@ -902,7 +913,8 @@ plzip -cd file.lz | dd bs=1024 count=10
 
 @noindent
 Example 8: Decompress @file{file.lz} partially from decompressed byte at
-offset 10000 to decompressed byte at offset 14999 (5000 bytes are produced).
+offset 10_000 to decompressed byte at offset 14_999 (5000 bytes are
+produced).
 
 @example
 plzip -cd file.lz | dd bs=1000 skip=10 count=5

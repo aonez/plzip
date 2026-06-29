@@ -1,5 +1,5 @@
 /* Plzip - Massively parallel implementation of lzip
-   Copyright (C) 2009-2025 Antonio Diaz Diaz.
+   Copyright (C) 2009-2026 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

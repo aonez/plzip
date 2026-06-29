@@ -1,6 +1,6 @@
 /* Plzip - Massively parallel implementation of lzip
    Copyright (C) 2009 Laszlo Ersek.
-   Copyright (C) 2009-2025 Antonio Diaz Diaz.
+   Copyright (C) 2009-2026 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -318,14 +318,16 @@ struct Splitter_arg
   {
   Worker_arg worker_arg;
   pthread_t * const worker_threads;
+  const unsigned long long cfile_size;
   const int data_size;
   const int infd;
   int num_workers;		// returned by splitter to main thread
   Splitter_arg( Packet_courier & co, const Pretty_print & pp_, const int dis,
-                const int mll, const int off, pthread_t * wt, const int das,
+                const int mll, const int off, pthread_t * wt,
+                const unsigned long long csize, const int das,
                 const int ifd, const int nw )
     : worker_arg( co, pp_, dis, mll, off ), worker_threads( wt ),
-      data_size( das ), infd( ifd ), num_workers( nw ) {}
+      cfile_size( csize ), data_size( das ), infd( ifd ), num_workers( nw ) {}
   };
 
 
@@ -415,9 +417,11 @@ extern "C" void * csplitter( void * arg )
   const Pretty_print & pp = tmp.worker_arg.pp;
   pthread_t * const worker_threads = tmp.worker_threads;
   const int offset = tmp.worker_arg.offset;
-  const int infd = tmp.infd;
   const int data_size = tmp.data_size;
+  const int infd = tmp.infd;
   int i = 0;				// number of workers started
+  if( verbosity >= 1 ) pp();
+  show_progress( 0, tmp.cfile_size, &pp );			// init
 
   for( bool first_post = true; ; first_post = false )
     {
@@ -425,7 +429,7 @@ extern "C" void * csplitter( void * arg )
     if( !data ) { pp( mem_msg2 ); cleanup_and_fail(); }
     const int size = readblock( infd, data + offset, data_size );
     if( size != data_size && errno )
-      { pp(); show_error( "Read error", errno ); cleanup_and_fail(); }
+      { pp(); show_error( rd_err_msg, errno ); cleanup_and_fail(); }
 
     if( size > 0 || first_post )	// first packet may be empty
       {
@@ -496,15 +500,13 @@ int compress( const unsigned long long cfile_size,
   if( !worker_threads ) { pp( mem_msg ); return 1; }
 
   Splitter_arg splitter_arg( courier, pp, dictionary_size, match_len_limit,
-               offset, worker_threads, data_size, infd, num_workers );
-
+                             offset, worker_threads, cfile_size, data_size,
+                             infd, num_workers );
   pthread_t splitter_thread;
   int errcode = pthread_create( &splitter_thread, 0, csplitter, &splitter_arg );
   if( errcode )
     { show_error( "Can't create splitter thread", errcode );
       delete[] worker_threads; return 1; }
-  if( verbosity >= 1 ) pp();
-  show_progress( 0, cfile_size, &pp );			// init
 
   muxer( courier, pp, outfd );
 
@@ -522,15 +524,13 @@ int compress( const unsigned long long cfile_size,
 
   if( verbosity >= 1 )
     {
-    if( in_size == 0 || out_size == 0 )
-      std::fputs( " no data compressed.\n", stderr );
-    else
-      std::fprintf( stderr, "%6.3f:1, %5.2f%% ratio, %5.2f%% saved, "
-                            "%llu in, %llu out.\n",
+    if( in_size > 0 && out_size > 0 )
+      std::fprintf( stderr, "%6.3f:1, %5.2f%% ratio, %5.2f%% saved,",
                     (double)in_size / out_size,
                     ( 100.0 * out_size ) / in_size,
-                    100.0 - ( ( 100.0 * out_size ) / in_size ),
-                    in_size, out_size );
+                    100.0 - ( ( 100.0 * out_size ) / in_size ) );
+    std::fprintf( stderr, " %s in, %s out.\n",
+                  format_num3( in_size ), format_num3( out_size ) );
     }
 
   if( debug_level & 1 )
